@@ -25,4 +25,4 @@
     {{ $movies->links()}}
 </div>
 
-@endsectionw
+@endsection
