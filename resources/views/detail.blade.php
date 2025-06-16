@@ -1,28 +1,27 @@
 @extends('layouts.template')
 
 @section('content')
-<div class="container mt-4 mb-5">
-    <div class="row">
-        <div class="col-md-5">
-           <img src="{{ asset($movie->cover_image) }}" class="img-fluid rounded-start" alt="{{ $movie->title }}">
-        </div>
-        <div class="col-md-7">
-            <h3>{{ $movie->title }}</h3>
-            <p>{{ $movie->synopsis }}</p>
+    <div class="card mb-3">
+        <div class="row g-0">
+            <div class="col-md-4">
+                <img src="{{ asset('storage/'.$movie->cover_image) }}" class="img-fluid rounded-start" alt="...">            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h3 class="card-title">{{ $movie->title }}</h3>
+                    <p class="card-text">{{ $movie->synopsis }}</p>
+                    <p><strong>Actors:</strong> {{ $movie->actors }}</p>
+                    <p><strong>Category:</strong> {{ $movie->category->category_name }}</p>
+                    <p><strong>Year:</strong> {{ $movie->year }}</p>
+                    <a href="{{ url()->previous() }}" class="btn btn-success">Back</a>
+                    <a href="{{ url('/edit-movie/' . $movie->id) }}" class="btn btn-warning">Edit</a>
 
-            @if (!empty($movie->actors))
-                <p><strong>Actors:</strong> {{ $movie->actors }}</p>
-            @endif
-
-            @if (!empty($movie->category))
-                <p><strong>Category:</strong> {{ $movie->category->category_name }}</p>
-            @endif
-
-            @if (!empty($movie->year))
-                <p><strong>Year:</strong> {{ $movie->year }}</p>
-            @endif
-            <a href="{{ route('homepage') }}" class="btn btn-success mt-3">Back</a>
+                    <form action="{{ url('/delete-movie/' . $movie->id) }}" method="POST" style="display:inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" onclick="return confirm('Yakin ingin menghapus film ini?')" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 @endsection
