@@ -8,12 +8,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Movie extends Model
 {
-    /** @use HasFactory<\Database\Factories\MovieFactory> */
+
     use HasFactory;
 
-    protected $fillable = ['title', 'slug', 'synopsis', 'category_id', 'year', 'actors', 'cover_image'];
+    protected $fillable = [
+        'title',
+        'slug',
+        'synopsis',
+        'category_id',
+        'year',
+        'actor',
+        'cover_image',
+    ];
 
-    public function category(): BelongsTo
+    public function category()
     {
         return $this->belongsTo(Category::class);
     }

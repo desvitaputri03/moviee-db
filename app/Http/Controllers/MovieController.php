@@ -6,114 +6,112 @@ use App\Models\Movie;
 use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Gate;
 
 class MovieController extends Controller
 {
-    public function homepage()
-    {
-        $movies = Movie::latest()->paginate(2); // hanya 2 per halaman
-        return view('homepage', compact('movies'));
+    public function index(Request $request)
+{
+    $search = $request->input('search');
+
+    $movies = Movie::query()
+        ->when($search, function ($query, $search) {
+            return $query->where('title', 'like', '%' . $search . '%');
+        })
+        ->latest()
+        ->paginate(6);
+
+    return view('pages.home', compact('movies', 'search'));
+}
+
+    public function detailMovie($id, $slug){
+        $movie = Movie::find($id);
+        return view('pages.detail_movie', compact('movie'));
     }
 
-    public function show($id)
-    {
-        $movie = Movie::findOrFail($id);
-        return view('detail', compact('movie'));
-    }
-
-    public function create()
-    {
+    public function create(){
         $categories = Category::all();
-        return view('create_movie', compact('categories'));
+        return view('pages.movie_form');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'synopsis' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'year' => 'required|integer',
-            'actors' => 'required|string',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'synopsis' => 'required|string',
+            'year' => 'required|integer|min:1800|max:' . date('Y'),
+            'category_id' => 'required|exists:categories,id',
+            'actor' => 'nullable|string|max:255',
         ]);
 
-        $slug = Str::slug($request->title);
-        $coverPath = null;
+        // Simpan file gambar
+        $imagePath = $request->file('cover_image')->store('cover_images', 'public');
 
-        if ($request->hasFile('cover_image')) {
-            $coverPath = $request->file('cover_image')->store('covers', 'public');
-        }
-
+        // Simpan data ke database
         Movie::create([
             'title' => $validated['title'],
-            'slug' => $slug,
+            'cover_image' => $imagePath,
+            'slug' => Str::slug($validated['title']),
             'synopsis' => $validated['synopsis'],
-            'category_id' => $validated['category_id'],
             'year' => $validated['year'],
-            'actors' => $validated['actors'],
-            'cover_image' => $coverPath,
+            'category_id' => $validated['category_id'],
+            'actor' => $validated['actor'],
         ]);
 
-        return redirect('/')->with('success', 'Data Movie Berhasil Disimpan.');
+        return redirect('/')->with('success', 'Movie has been added!');
+    }
+
+    public function list()
+    {
+        $movies = Movie::paginate(10);
+        return view('pages.list_movie', compact('movies'));
     }
 
     public function edit($id)
     {
-        $movie = Movie::findOrFail($id);
-        $categories = Category::all();
-        return view('edit_movie', compact('movie', 'categories'));
+        $movies = Movie::findorfail($id);
+        return view('pages.edit_movie', compact('movies'));
     }
 
     public function update(Request $request, $id)
     {
-        $movie = Movie::findOrFail($id);
+
+        $movies = Movie::findOrFail($id);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'synopsis' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'year' => 'required|integer',
-            'actors' => 'required|string',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'synopsis' => 'required|string',
+            'year' => 'required|integer|min:1800|max:' . date('Y'),
+            'category_id' => 'required|exists:categories,id',
+            'actor' => 'nullable|string|max:255',
         ]);
 
-        $slug = Str::slug($request->title);
-        $movie->slug = $slug;
-
-        if ($request->hasFile('cover_image')) {
-            if ($movie->cover_image) {
-                Storage::disk('public')->delete($movie->cover_image);
-            }
-
-            $coverPath = $request->file('cover_image')->store('covers', 'public');
-            $movie->cover_image = $coverPath;
+        if ($request->file('cover_image')) {
+            $imagePath = $request->file('cover_image')->store('cover_images', 'public');
+            $movies->cover_image = $imagePath;
         }
 
-        $movie->update([
+        $movies->update([
             'title' => $validated['title'],
+            'slug' => Str::slug($validated['title']),
             'synopsis' => $validated['synopsis'],
-            'category_id' => $validated['category_id'],
             'year' => $validated['year'],
-            'actors' => $validated['actors'],
-            'slug' => $slug,
-            'cover_image' => $movie->cover_image,
+            'category_id' => $validated['category_id'],
+            'actor' => $validated['actor'],
         ]);
-
-        return redirect('/')->with('success', 'Data Movie Berhasil Diupdate.');
+        return redirect('/list')->with('success', 'berhasil mengupdate data movie');
     }
 
     public function destroy($id)
     {
-        $movie = Movie::findOrFail($id);
+        if(Gate::allows('delete')){
 
-        if ($movie->cover_image) {
-            Storage::disk('public')->delete($movie->cover_image);
+            $data = Movie::findorfail($id);
+            $data->delete();
+            return redirect()->back()->with('success', 'data berhasil di hapus');
         }
 
-        $movie->delete();
-
-        return redirect('/')->with('success', 'Data Movie Berhasil Dihapus.');
     }
 }

@@ -1,35 +1,28 @@
-@extends ('layouts.template')
+@extends('layout.main')
 
-@section('content')
-    <div class="container">
-        <div class="row">
-            <h1>Login User</h1>
-            @if ($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-  <strong>{{ $errors->first('email') }}</strong> 
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-            
-            @endif
-            <form action="/login" method="post" class="row">
-    @csrf
-    <div class="form-floating mb-3">
-        <input type="email" name="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-        <label for="floatingInput">Email address</label>
-    </div>
-    <div class="form-floating mb-3">
-        <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password">
-        <label for="floatingPassword">Password</label>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-primary mb-3">Login</button>
-    </div>
+@section('container')
 
-</form>
-
-            
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <h1 class="text-center">Login</h1>
+            <form action="/login" method="POST">
+                @csrf
+                <div class="mb-3">
+                    <label for="exampleInputEmail1" class="form-label">Email address</label>
+                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="exampleInputEmail1" aria-describedby="emailHelp" name="email" value="{{ old('email') }}">
+                    @error('email')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="mb-3">
+                    <label for="exampleInputPassword1" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="exampleInputPassword1" name="password">
+                </div>
+                <button type="submit" class="btn btn-success w-100">Submit</button>
+            </form>
         </div>
-        
     </div>
+</div>
 
 @endsection
